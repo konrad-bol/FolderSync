@@ -1,0 +1,4 @@
+﻿// See https://aka.ms/new-console-template for more information
+Console.WriteLine("Hello, World!");
+var fs = FolderSync.Utils.FileComparer.GetMD5("C:\\Users\\kojad\\source\\repos\\test.txt");
+Console.WriteLine(fs); 
