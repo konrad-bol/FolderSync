@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace FolderSync.Services
 {
-    class Logger
+    public interface ILogger
     {
+        public void log(string message);
     }
 }
