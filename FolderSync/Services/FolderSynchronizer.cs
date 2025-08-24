@@ -21,6 +21,18 @@ namespace FolderSync.Services
             this.replicaPath = replicaPath;
             this.logger = logger;
         }
+        public async Task start_sync()
+        {
+            var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+            while (await timer.WaitForNextTickAsync())
+            {
+                logger.start_log();
+                logger.log($"Synchronization started from {sourcePath} to {replicaPath}");
+                Sync();
+                logger.log($"Synchronization completed from {sourcePath} to {replicaPath}");
+                logger.end_log();
+            }
+        }
         public void Sync()
         {
             Dictionary<string, List<string>> sourceFilesDir = new();
@@ -36,6 +48,7 @@ namespace FolderSync.Services
                 if (File.Exists(replicafilePath) && !FileComparer.AreFilesEqual(file, replicafilePath))
                 {
                     logger.log($"File {file} exists in replica but content is different. Updating...");
+                    logger.log_change(FileComparer.GetMessages(file, replicafilePath));
                     File.Copy(file, replicafilePath, true);
                 }
                 string hash = FileComparer.GetMD5(file);
@@ -60,7 +73,7 @@ namespace FolderSync.Services
             foreach (var kvp in sourceFilesDir)
             {
                 string hash = kvp.Key;
-                var sourceFilesWithHash = kvp.Value;  
+                var sourceFilesWithHash = kvp.Value;
                 if (!replicaFilesDir.TryGetValue(hash, out var replicaFilesWithHash))
                     continue;
 
@@ -122,6 +135,42 @@ namespace FolderSync.Services
                 {
                     logger.log($"File {file} exists in replica but not in source. Deleting...");
                     File.Delete(file);
+                }
+            }
+
+            // 6. delete empty directories in replica
+            var replicaDirectories = Directory.EnumerateDirectories(replicaPath, "*", SearchOption.AllDirectories);
+            var sourceDirectories = Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories);
+            foreach (var dir in replicaDirectories)
+            {
+                if (!sourceDirectories.Contains(dir.Replace(replicaPath, sourcePath)))
+                {
+                    try
+                    {
+                        Directory.Delete(dir, true);
+                        logger.log($"Deleted empty directory: {dir}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.log($"Failed to delete directory {dir}: {ex.Message}");
+                    }
+                }
+            }
+            // 7. create directories in replica that exist in source but not in replica
+            foreach (var dir in sourceDirectories)
+            {
+                string replicaDir = dir.Replace(sourcePath, replicaPath);
+                if (!Directory.Exists(replicaDir))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(replicaDir);
+                        logger.log($"Created directory: {replicaDir}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.log($"Failed to create directory {replicaDir}: {ex.Message}");
+                    }
                 }
             }
         }

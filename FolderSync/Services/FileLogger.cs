@@ -17,9 +17,26 @@ namespace FolderSync.Services
 
         public void log(string message)
         {
-            var fullMessage = $"[{DateTime.Now}] {message}";
-            Console.WriteLine(fullMessage);
-            File.AppendAllText(logFilePath, fullMessage + Environment.NewLine);
+            Console.WriteLine(message);
+            File.AppendAllText(logFilePath, message + Environment.NewLine);
+        }
+        public void log_change(List<string> messages)
+        {
+            foreach (var message in messages)
+            {
+                Console.WriteLine(message);
+                File.AppendAllText(logFilePath, message + Environment.NewLine);
+            }
+        }
+        public void start_log()
+        {
+            Console.WriteLine($"[{DateTime.Now}] Log started.");
+            File.AppendAllText(logFilePath, $"[{DateTime.Now}] Log started." + Environment.NewLine);
+        }
+        public void end_log()
+        {
+            Console.WriteLine($"[{DateTime.Now}] Log ended.");
+            File.AppendAllText(logFilePath, $"[{DateTime.Now}] Log ended." + Environment.NewLine);
         }
     }
 }
