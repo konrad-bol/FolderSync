@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FolderSync.Services
 {
-    class FileLogger : ILogger
+    public class FileLogger : ILogger
     {
         private string logFilePath;
 

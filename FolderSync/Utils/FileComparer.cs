@@ -26,5 +26,156 @@ namespace FolderSync.Utils
             return GetMD5(filePath1) == GetMD5(filePath2);
 
         }
+        public static List<(bool, string, int)> GetDifferents(string sourceFilePath, string replicaFilePath)
+        {
+            var Differents = new List<(bool, string, int)>();
+            var sourceLines = File.ReadAllLines(sourceFilePath).ToList();
+            var replicaLines = File.ReadAllLines(replicaFilePath).ToList();
+
+            int i = 0, j = 0;
+
+
+            while (i < sourceLines.Count && j < replicaLines.Count)
+            {
+                if (sourceLines[i] == replicaLines[j])//takie same linijki
+                {
+                    i++;
+                    j++;
+                }
+                else//jakies zmiany
+                {
+                    Differents.Add((true, sourceLines[i], i));
+                    Differents.Add((false, replicaLines[j], j));
+                    i++;
+                    j++;
+
+                }
+
+            }
+            while (i < sourceLines.Count)
+            {
+                Differents.Add((true, sourceLines[i], i));
+                i++;
+            }
+            while (j < replicaLines.Count)
+            {
+                Differents.Add((false, replicaLines[j], j));
+                j++;
+            }
+            int k = 0;
+            while (k < Differents.Count)
+            {
+                var (flag, line, index) = Differents[k];
+                int oldIndex = index;
+                for (int l = k + 1; l < Differents.Count; l++)
+                {
+                    var (nextFlag, nextLine, nextIndex) = Differents[l];
+                    if (nextIndex != oldIndex + 1 && nextIndex != oldIndex) break;
+                    if (flag != nextFlag && line == nextLine)
+                    {
+                        Differents.RemoveAt(l);
+                        Differents.RemoveAt(k);
+                        k--;
+                        break;
+                    }
+                    oldIndex = nextIndex;
+                }
+
+                k++;
+            }
+            return Differents;
+        }
+        public static List<string> GetMessages(string sourceFilePath, string replicaFilePath)
+        {
+            var messages = new List<string>();
+            var diffs = GetDifferents(sourceFilePath, replicaFilePath);
+
+            int i = 0;
+            while (i < diffs.Count)
+            {
+                var (isSource, line, index) = diffs[i];
+
+                // Bufory na blok
+                var removed = new List<string>();
+                var added = new List<string>();
+                int startIndex = index;
+
+                // Zbieramy blok zmian (kolejne +/− do momentu aż trafimy na "ciągłość")
+                while (i < diffs.Count)
+                {
+                    var (currFlag, currLine, currIndex) = diffs[i];
+
+                    // Sprawdzamy czy element należy do bloku
+                    if (currFlag == true) // z Source (czyli usunięte linie)
+                        added.Add(currLine);
+                    else
+                        removed.Add(currLine);
+
+                    // Sprawdzamy następny
+                    if (i + 1 < diffs.Count)
+                    {
+                        var (nextFlag, _, nextIndex) = diffs[i + 1];
+                        // jeśli przerwa w indeksach → koniec bloku
+                        if (Math.Abs(nextIndex - currIndex) > 1)
+                        {
+                            i++;
+                            break;
+                        }
+                    }
+                    i++;
+                }
+
+                // Teraz mamy blok -> decydujemy jaki komunikat
+                if (removed.Count > 0 && added.Count > 0)
+                {   
+                    if(removed.Count == 1 || added.Count == 1)
+                    {
+                        messages.Add($"Changed line at {startIndex + 1}:\n" +
+                        $"  - {string.Join("\n  - ", removed)}\n" +
+                        $"  + {string.Join("\n  + ", added)}");
+                    }
+                    else
+                        messages.Add(
+                        $"Changed lines {startIndex + 1}-{startIndex + removed.Count}:\n" +
+                        $"  - {string.Join("\n  - ", removed)}\n" +
+                        $"  + {string.Join("\n  + ", added)}"
+                    );
+                }
+                else if (removed.Count > 0)
+                {
+                    if (removed.Count == 1)
+                    {
+                        messages.Add($"Removed line at {startIndex + 1}:\n" +
+                        $"  - {string.Join("\n  - ", removed)}");
+
+                    }
+                    else
+                    {
+                        messages.Add(
+                        $"Removed lines {startIndex + 1}-{startIndex + removed.Count}:\n" +
+                        $"  - {string.Join("\n  - ", removed)}"
+                    );
+                    }
+                }
+                else if (added.Count > 0)
+                {
+                    if (added.Count == 1)
+                    {
+                        messages.Add($"Added line at {startIndex + 1}:\n" +
+                        $"  + {string.Join("\n  + ", added)}");
+                    }
+                    else
+                    {
+                        messages.Add(
+                        $"Added lines {startIndex + 1}-{startIndex + added.Count}:\n" +
+                        $"  + {string.Join("\n  + ", added)}"
+                    );
+                    }
+
+                }
+            }
+
+            return messages;
+        }
     }
 }
