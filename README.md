@@ -69,6 +69,84 @@ The program runs in a loop, periodically checking for changes (default: every 10
 - `GetDifferents(string sourceFilePath, string replicaFilePath)` – returns a list of differences between two files (line by line)
 - `GetMessages(string sourceFilePath, string replicaFilePath)` – returns human-readable messages about changes (added/removed/changed lines)
 
+### Sync mechanism
+The `Sync` method orchestrates the synchronization process:
+- Detects new, modified, and deleted files using `FileComparer`.
+- Applies the appropriate operation (copy, update, delete).
+- Ensures consistency even when the process is interrupted.
+
+### FileComparer (diff algorithm)
+`FileComparer` detects differences between two folders using:
+- **Timestamps** – modified date comparison
+- **File size** – to detect changes without content inspection
+- **Checksums (optional extension)** – for deeper verification in critical scenarios
+## 🔄 Synchronization process (`Sync`)
+
+The core synchronization logic is implemented in the `Sync` method.  
+It detects changes in the **source** folder and applies the corresponding operations to the **replica**.  
+The process is divided into **6 major steps**:
+
+1. **Update modified files**  
+   - If a file exists in both `source` and `replica` but their content differs, the file in the replica is overwritten.  
+   - The change is logged, including a diff of modified lines.
+
+2. **Detect moved files**  
+   - Files with the same **MD5 hash** but located in a different path are recognized as moved.  
+   - The file is relocated within the replica to match the new path.  
+   - ⚠️ Limitation: when multiple files have identical content and are renamed/moved simultaneously, the algorithm may mismatch them (e.g., `file_1.txt → file_1_renamed.txt` could be confused with another file of the same content).  
+
+3. **Add new files**  
+   - Any file that exists in the source but not in the replica is copied.  
+
+4. **Delete removed files**  
+   - Files that no longer exist in the source are deleted from the replica.  
+
+5. **Remove empty directories**  
+   - Directories in the replica that no longer exist in the source are deleted.  
+
+6. **Create missing directories**  
+   - New directories found in the source are created in the replica.  
+
+This ensures that the replica remains an exact mirror of the source folder, even when files are updated, moved, renamed, or removed.
+
+---
+
+## 📝 Diff algorithm (`FileComparer`)
+
+The class `FileComparer` provides methods to calculate differences between files and generate human-readable change messages.
+
+### `GetDifferents(string sourceFilePath, string replicaFilePath)`
+- Implements a **line-based diff algorithm**.
+- Produces a list of changes as tuples:
+  - `(true, line, index)` → line exists only in **source** (added/changed).
+  - `(false, line, index)` → line exists only in **replica** (removed/changed).
+- The algorithm:
+  1. Compares files line by line.
+  2. Collects mismatches in a temporary list.
+  3. Reduces this list by eliminating false positives (when a line is matched again later).
+- The result is a **minimal set of differences**.
+
+### `GetMessages(string sourceFilePath, string replicaFilePath)`
+- Converts the raw differences from `GetDifferents` into readable change blocks.  
+- Supports:
+  - **Changed lines** (single or block ranges)  
+    ```
+    Changed lines 3–7:
+      - old text
+      + new text
+    ```
+  - **Removed lines**  
+    ```
+    Removed line at 5:
+      - obsolete text
+    ```
+  - **Added lines**  
+    ```
+    Added line at 10:
+      + new content
+    ```
+- These messages are written into the log file when synchronization detects modifications.
+
 ---
 
 ## 🧪 Tests
@@ -142,7 +220,10 @@ Synchronization completed from C:\Users\kojad\source\repos\test\source to C:\Use
 ```
 
 ---
-
+## Planned Improvements
+- **Retry Mechanism Tests** - Add tests to verify the retry mechanism, ensuring that in case of an operation failure, the file is correctly re-queued for subsequent attempts.
+- **Smarter Diff** - Improve the file comparison algorithm to be faster and provide more detailed change reports.
+- **Versioned Backups** - Add a mechanism for versioning replicas (e.g., replica-[datetime]), similar to Git. Each sync push could create a new backup version, allowing you to revert to previous data states.
 ## ✅ Summary
 
 **FolderSync** is a lightweight folder synchronization tool with:
