@@ -19,8 +19,8 @@ The application provides detailed logs (both in the terminal and in log files) w
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-repo/foldersync.git
-cd foldersync
+git clone https://github.com/your-repo/Foldersync.git
+cd Foldersync
 ```
 
 ### 2. Build the project
@@ -40,7 +40,10 @@ dotnet run -- "C:\path\to\source" "C:\path\to\replica" "C:\path\to\log.txt"
 ```
 
 The program runs in a loop, periodically checking for changes (default: every 10 seconds).
-
+### 4. Run the tests
+```bash
+dotnet test ..\FolderSync.Tests\FolderSync.Tests.csproj
+```
 ---
 
 ## 📚 Components & Methods
