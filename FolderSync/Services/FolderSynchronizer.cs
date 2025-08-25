@@ -62,7 +62,7 @@ namespace FolderSync.Services
 
 
 
-            // 3. compare file with the same content in source and replica
+            // 2. compare file with the same content in source and replica
             foreach (var file in replicaFiles)
             {
                 string hash = FileComparer.GetMD5(file);
@@ -115,7 +115,7 @@ namespace FolderSync.Services
 
 
 
-            // 4. New files in source that do not exist in replica
+            // 3. New files in source that do not exist in replica
             foreach (var filesource in sourceFiles)
             {
                 string replicaFilePath = filesource.Replace(sourcePath, replicaPath);
@@ -126,7 +126,7 @@ namespace FolderSync.Services
                     ActionFileWithRetry(FileCase.Copy, filesource, replicaFilePath);
                 }
             }
-            // 5. delete files in replica that do not exist in source
+            // 4. delete files in replica that do not exist in source
 
             foreach (var file in replicaFiles)
             {
@@ -138,7 +138,7 @@ namespace FolderSync.Services
                 }
             }
 
-            // 6. delete empty directories in replica
+            // 5. delete empty directories in replica
             var replicaDirectories = Directory.EnumerateDirectories(replicaPath, "*", SearchOption.AllDirectories);
             var sourceDirectories = Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories);
             foreach (var dir in replicaDirectories)
@@ -156,7 +156,7 @@ namespace FolderSync.Services
                     }
                 }
             }
-            // 7. create directories in replica that exist in source but not in replica
+            // 6. create directories in replica that exist in source but not in replica
             foreach (var dir in sourceDirectories)
             {
                 string replicaDir = dir.Replace(sourcePath, replicaPath);

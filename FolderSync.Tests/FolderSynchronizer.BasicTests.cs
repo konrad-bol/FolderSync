@@ -74,7 +74,7 @@ namespace FolderSync.Tests
             ArrangeTestEnvironment(out var sourcePath, out var replicaPath, out var folderSync, out var tempRoot);
             // Create a file in the source
             var fileInSource = Path.Combine(sourcePath, "dir", "file.txt");
-            Directory.CreateDirectory(Path.GetDirectoryName(fileInSource)); // Ensure the directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(fileInSource)!); // Ensure the directory exists
             File.WriteAllText(fileInSource, "This is a moved file");
 
             var fileInReplica = Path.Combine(replicaPath, "file.txt");
