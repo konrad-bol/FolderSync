@@ -24,7 +24,7 @@ namespace FolderSync.Tests
             // Act
             folderSync.Sync();
             // Assert
-            Assert.True(FileComparer.AreFilesEqual(fileInSource, fileInReplica),"File form source should be create when it dosent exist in replica ");
+            Assert.True(FileComparer.AreFilesEqual(fileInSource, fileInReplica), "File form source should be create when it dosent exist in replica ");
             // Cleanup
             CleanupTestEnvironment(tempRoot);
         }
@@ -80,7 +80,7 @@ namespace FolderSync.Tests
             var fileInReplica = Path.Combine(replicaPath, "file.txt");
             File.WriteAllText(fileInReplica, "This is a moved file");
 
-            var newPathInReplica = Path.Combine(replicaPath, "dir","file.txt");
+            var newPathInReplica = Path.Combine(replicaPath, "dir", "file.txt");
             // Act
             folderSync.Sync();
             // Assert
@@ -89,6 +89,6 @@ namespace FolderSync.Tests
             // Cleanup
             CleanupTestEnvironment(tempRoot);
         }
-        
+
     }
 }

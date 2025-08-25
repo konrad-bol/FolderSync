@@ -9,21 +9,28 @@ namespace FolderSync.Tests
 {
     public class FolderSynchronizerLoggerTests : TestHelper
     {
-       // [Fact]
-       // public void FileLogger_ShouldLogMessages_WhenSyncIsCalled()
-       // {
+        [Fact]
+        public void FileLogger_ShouldLogMessagesToFile()
+        {
             // Arrange
-           // ArrangeTestEnvironment(out var sourcePath, out var replicaPath, out var folderSync, out var tempRoot);
-           // var logger = new FileLogger(Path.Combine(tempRoot, "log.txt"));
-           // folderSync.Logger = logger;
+            var tempRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempRoot);
+            var logFilePath = Path.Combine(tempRoot, "log.txt");
+            var logger = new FileLogger(logFilePath);
+
             // Act
-           // folderSync.Sync();
+            logger.start_log();
+            logger.log("Test message 1");
+            logger.log("Test message 2");
+            logger.end_log();
+
             // Assert
-            //var logContent = File.ReadAllText(logger.LogFilePath);
-           // Assert.Contains("Synchronization started", logContent);
-            //Assert.Contains("Synchronization completed", logContent);
+            var logContent = File.ReadAllText(logFilePath);
+            Assert.Contains("Test message 1", logContent);
+            Assert.Contains("Test message 2", logContent);
+
             // Cleanup
-           // CleanupTestEnvironment(tempRoot);
-       // }
+            Directory.Delete(tempRoot, true);
+        }
     }
 }

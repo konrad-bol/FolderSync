@@ -9,8 +9,6 @@ namespace FolderSync.Tests
 {
     public class FolderSynchronizerEdgeCases : TestHelper
     {
-        // This class is intended for edge case tests that do not fit into the standard test categories.
-        // It can be used to test unusual scenarios or specific edge cases that may arise during folder synchronization.
 
         [Fact]
         public void Sync_ShouldHandleEmptySourceAndReplica()
@@ -144,7 +142,7 @@ namespace FolderSync.Tests
         {
             // Arrange
             ArrangeTestEnvironment(out var sourcePath, out var replicaPath, out var folderSync, out var tempRoot);
-            File.WriteAllText(Path.Combine(sourcePath, "Nested_1","file1.txt"), "Content 2");
+            File.WriteAllText(Path.Combine(sourcePath, "Nested_1", "file1.txt"), "Content 2");
             File.WriteAllText(Path.Combine(sourcePath, "file2.txt"), "Content 1");
 
             File.WriteAllText(Path.Combine(replicaPath, "Nested_1", "file1.txt"), "Content 1");

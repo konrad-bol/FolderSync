@@ -37,12 +37,12 @@ namespace FolderSync.Utils
 
             while (i < sourceLines.Count && j < replicaLines.Count)
             {
-                if (sourceLines[i] == replicaLines[j])//takie same linijki
+                if (sourceLines[i] == replicaLines[j])
                 {
                     i++;
                     j++;
                 }
-                else//jakies zmiany
+                else
                 {
                     Differents.Add((true, sourceLines[i], i));
                     Differents.Add((false, replicaLines[j], j));
@@ -95,27 +95,22 @@ namespace FolderSync.Utils
             {
                 var (isSource, line, index) = diffs[i];
 
-                // Bufory na blok
                 var removed = new List<string>();
                 var added = new List<string>();
                 int startIndex = index;
 
-                // Zbieramy blok zmian (kolejne +/− do momentu aż trafimy na "ciągłość")
                 while (i < diffs.Count)
                 {
                     var (currFlag, currLine, currIndex) = diffs[i];
 
-                    // Sprawdzamy czy element należy do bloku
-                    if (currFlag == true) // z Source (czyli usunięte linie)
+                    if (currFlag == true)
                         added.Add(currLine);
                     else
                         removed.Add(currLine);
 
-                    // Sprawdzamy następny
                     if (i + 1 < diffs.Count)
                     {
                         var (nextFlag, _, nextIndex) = diffs[i + 1];
-                        // jeśli przerwa w indeksach → koniec bloku
                         if (Math.Abs(nextIndex - currIndex) > 1)
                         {
                             i++;
@@ -125,10 +120,9 @@ namespace FolderSync.Utils
                     i++;
                 }
 
-                // Teraz mamy blok -> decydujemy jaki komunikat
                 if (removed.Count > 0 && added.Count > 0)
-                {   
-                    if(removed.Count == 1 || added.Count == 1)
+                {
+                    if (removed.Count == 1 || added.Count == 1)
                     {
                         messages.Add($"Changed line at {startIndex + 1}:\n" +
                         $"  - {string.Join("\n  - ", removed)}\n" +

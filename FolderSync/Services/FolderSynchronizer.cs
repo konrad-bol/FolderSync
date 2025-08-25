@@ -24,14 +24,15 @@ namespace FolderSync.Services
         public async Task start_sync()
         {
             var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
-            while (await timer.WaitForNextTickAsync())
-            {
-                logger.start_log();
-                logger.log($"Synchronization started from {sourcePath} to {replicaPath}");
-                Sync();
-                logger.log($"Synchronization completed from {sourcePath} to {replicaPath}");
-                logger.end_log();
-            }
+            while (await timer.WaitForNextTickAsync()) SyncIteration();
+        }
+        public void SyncIteration()
+        {
+            logger.start_log();
+            logger.log($"Synchronization started from {sourcePath} to {replicaPath}");
+            Sync();
+            logger.log($"Synchronization completed from {sourcePath} to {replicaPath}");
+            logger.end_log();
         }
         public void Sync()
         {
@@ -47,9 +48,10 @@ namespace FolderSync.Services
                 string replicafilePath = file.Replace(sourcePath, replicaPath);
                 if (File.Exists(replicafilePath) && !FileComparer.AreFilesEqual(file, replicafilePath))
                 {
-                    logger.log($"File {file} exists in replica but content is different. Updating...");
+
+                    logger.log($"[Changed file: {Path.GetFileName(file)}]");
                     logger.log_change(FileComparer.GetMessages(file, replicafilePath));
-                    File.Copy(file, replicafilePath, true);
+                    ActionFileWithRetry(FileCase.Copy, file, replicafilePath);
                 }
                 string hash = FileComparer.GetMD5(file);
                 if (!sourceFilesDir.ContainsKey(hash))
@@ -86,9 +88,8 @@ namespace FolderSync.Services
                     var replicaMatch = replicaRemaining.FirstOrDefault(r => Path.GetFileName(r) == Path.GetFileName(sourceFile));
                     if (replicaMatch != null && replicaMatch != expectedReplicaPath)
                     {
-                        logger.log($"Moving {replicaMatch} → {expectedReplicaPath}");
-                        Directory.CreateDirectory(Path.GetDirectoryName(expectedReplicaPath)!);
-                        File.Move(replicaMatch, expectedReplicaPath, true);
+                        logger.log($"Moving {Path.GetRelativePath(replicaPath, replicaMatch)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)}");
+                        ActionFileWithRetry(FileCase.Move, replicaMatch, expectedReplicaPath);
 
                         sourceRemaining.Remove(sourceFile);
                         replicaRemaining.Remove(replicaMatch);
@@ -102,9 +103,8 @@ namespace FolderSync.Services
                     string expectedReplicaPath = sourceFile.Replace(sourcePath, replicaPath);
                     if (replicaFile != expectedReplicaPath)
                     {
-                        logger.log($"Moving {replicaFile} → {expectedReplicaPath}");
-                        Directory.CreateDirectory(Path.GetDirectoryName(expectedReplicaPath)!);
-                        File.Move(replicaFile, expectedReplicaPath, true);
+                        logger.log($"Moving {Path.GetRelativePath(replicaPath, replicaFile)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)} ]");
+                        ActionFileWithRetry(FileCase.Move, replicaFile, expectedReplicaPath);
                     }
 
                     sourceRemaining.RemoveAt(0);
@@ -121,9 +121,9 @@ namespace FolderSync.Services
                 string replicaFilePath = filesource.Replace(sourcePath, replicaPath);
                 if (!File.Exists(replicaFilePath))
                 {
-                    logger.log($"File {filesource} does not exist in replica. Copying...");
-                    _ = Directory.CreateDirectory(Path.GetDirectoryName(replicaFilePath)); // Ensure directory exists
-                    File.Copy(filesource, replicaFilePath);
+
+                    logger.log($"[Created file: {Path.GetRelativePath(sourcePath, filesource)}]");
+                    ActionFileWithRetry(FileCase.Copy, filesource, replicaFilePath);
                 }
             }
             // 5. delete files in replica that do not exist in source
@@ -133,7 +133,7 @@ namespace FolderSync.Services
                 string sourceFilePath = file.Replace(replicaPath, sourcePath);
                 if (!File.Exists(sourceFilePath))
                 {
-                    logger.log($"File {file} exists in replica but not in source. Deleting...");
+                    logger.log($"[Deleted file: {Path.GetRelativePath(replicaPath, file)}]");
                     File.Delete(file);
                 }
             }
@@ -174,5 +174,56 @@ namespace FolderSync.Services
                 }
             }
         }
+
+        enum FileCase
+        {
+            Move,
+            Copy,
+            Delete
+        }
+        private void ActionFileWithRetry(FileCase fileCase, string source, string destination, int retryCount = 3, int delayMs = 100)
+        {
+            for (int i = 0; i < retryCount; i++)
+            {
+                try
+                {
+
+                    switch (fileCase)
+                    {
+                        case FileCase.Move:
+                            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                            File.Move(source, destination, true);
+                            break;
+                        case FileCase.Copy:
+                            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                            File.Copy(source, destination, true);
+                            break;
+                        case FileCase.Delete:
+                            File.Delete(source);
+                            break;
+                    }
+                    return;
+                }
+                catch (IOException ex) when (i < retryCount - 1)
+                {
+                    Thread.Sleep(delayMs);
+                }
+            }
+            switch (fileCase)
+            {
+                case FileCase.Move:
+                    File.Move(source, destination, true);
+                    break;
+                case FileCase.Copy:
+                    File.Copy(source, destination, true);
+                    break;
+                case FileCase.Delete:
+                    File.Delete(source);
+                    break;
+            }
+        }
+
     }
+
+
 }

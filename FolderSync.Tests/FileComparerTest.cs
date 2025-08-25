@@ -129,7 +129,7 @@ namespace FolderSync.Tests
                 (true, "B", 2),
                 (false, "Y", 2)
             };
-             Assert.Equal(expected, differences);
+            Assert.Equal(expected, differences);
 
             // Cleanup
             File.Delete(source);
@@ -267,7 +267,7 @@ namespace FolderSync.Tests
             // Arrange
             var source = Path.GetTempFileName();
             var replica = Path.GetTempFileName();
-            File.WriteAllLines(source, new[] { "1", "A", "2", "B", "3","C" });
+            File.WriteAllLines(source, new[] { "1", "A", "2", "B", "3", "C" });
             File.WriteAllLines(replica, new[] { "1", "X", "2", "Y", "3" });
 
             // Act
