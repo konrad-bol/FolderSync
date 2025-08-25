@@ -21,7 +21,7 @@ namespace FolderSync.Services
             this.replicaPath = replicaPath;
             this.logger = logger;
         }
-        public async Task start_sync()
+        public async Task StartSync()
         {
             var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
             while (await timer.WaitForNextTickAsync()) SyncIteration();
@@ -88,7 +88,7 @@ namespace FolderSync.Services
                     var replicaMatch = replicaRemaining.FirstOrDefault(r => Path.GetFileName(r) == Path.GetFileName(sourceFile));
                     if (replicaMatch != null && replicaMatch != expectedReplicaPath)
                     {
-                        logger.log($"Moving {Path.GetRelativePath(replicaPath, replicaMatch)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)}");
+                        logger.log($"[Moving {Path.GetRelativePath(replicaPath, replicaMatch)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)}]");
                         ActionFileWithRetry(FileCase.Move, replicaMatch, expectedReplicaPath);
 
                         sourceRemaining.Remove(sourceFile);
@@ -103,7 +103,7 @@ namespace FolderSync.Services
                     string expectedReplicaPath = sourceFile.Replace(sourcePath, replicaPath);
                     if (replicaFile != expectedReplicaPath)
                     {
-                        logger.log($"Moving {Path.GetRelativePath(replicaPath, replicaFile)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)} ]");
+                        logger.log($"[Moving {Path.GetRelativePath(replicaPath, replicaFile)} → {Path.GetRelativePath(replicaPath, expectedReplicaPath)}]");
                         ActionFileWithRetry(FileCase.Move, replicaFile, expectedReplicaPath);
                     }
 
@@ -148,11 +148,11 @@ namespace FolderSync.Services
                     try
                     {
                         Directory.Delete(dir, true);
-                        logger.log($"Deleted empty directory: {dir}");
+                        logger.log($"[Deleted empty directory: {dir}]");
                     }
                     catch (Exception ex)
                     {
-                        logger.log($"Failed to delete directory {dir}: {ex.Message}");
+                        logger.log($"[Failed to delete directory {dir}: {ex.Message}]");
                     }
                 }
             }
@@ -165,11 +165,11 @@ namespace FolderSync.Services
                     try
                     {
                         Directory.CreateDirectory(replicaDir);
-                        logger.log($"Created directory: {replicaDir}");
+                        logger.log($"[Created directory: {replicaDir}]");
                     }
                     catch (Exception ex)
                     {
-                        logger.log($"Failed to create directory {replicaDir}: {ex.Message}");
+                        logger.log($"[Failed to create directory {replicaDir}: {ex.Message}]");
                     }
                 }
             }
@@ -206,6 +206,7 @@ namespace FolderSync.Services
                 }
                 catch (IOException ex) when (i < retryCount - 1)
                 {
+                    logger.log($"[Failed: {ex.Message}]");
                     Thread.Sleep(delayMs);
                 }
             }

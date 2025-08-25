@@ -28,7 +28,7 @@ namespace FolderSync.Utils
         }
         public static List<(bool, string, int)> GetDifferents(string sourceFilePath, string replicaFilePath)
         {
-            var Differents = new List<(bool, string, int)>();
+            var differents = new List<(bool, string, int)>();
             var sourceLines = File.ReadAllLines(sourceFilePath).ToList();
             var replicaLines = File.ReadAllLines(replicaFilePath).ToList();
 
@@ -44,8 +44,8 @@ namespace FolderSync.Utils
                 }
                 else
                 {
-                    Differents.Add((true, sourceLines[i], i));
-                    Differents.Add((false, replicaLines[j], j));
+                    differents.Add((true, sourceLines[i], i));
+                    differents.Add((false, replicaLines[j], j));
                     i++;
                     j++;
 
@@ -54,27 +54,27 @@ namespace FolderSync.Utils
             }
             while (i < sourceLines.Count)
             {
-                Differents.Add((true, sourceLines[i], i));
+                differents.Add((true, sourceLines[i], i));
                 i++;
             }
             while (j < replicaLines.Count)
             {
-                Differents.Add((false, replicaLines[j], j));
+                differents.Add((false, replicaLines[j], j));
                 j++;
             }
             int k = 0;
-            while (k < Differents.Count)
+            while (k < differents.Count)
             {
-                var (flag, line, index) = Differents[k];
+                var (flag, line, index) = differents[k];
                 int oldIndex = index;
-                for (int l = k + 1; l < Differents.Count; l++)
+                for (int l = k + 1; l < differents.Count; l++)
                 {
-                    var (nextFlag, nextLine, nextIndex) = Differents[l];
+                    var (nextFlag, nextLine, nextIndex) = differents[l];
                     if (nextIndex != oldIndex + 1 && nextIndex != oldIndex) break;
                     if (flag != nextFlag && line == nextLine)
                     {
-                        Differents.RemoveAt(l);
-                        Differents.RemoveAt(k);
+                        differents.RemoveAt(l);
+                        differents.RemoveAt(k);
                         k--;
                         break;
                     }
@@ -83,7 +83,7 @@ namespace FolderSync.Utils
 
                 k++;
             }
-            return Differents;
+            return differents;
         }
         public static List<string> GetMessages(string sourceFilePath, string replicaFilePath)
         {

@@ -1,9 +1,21 @@
 ﻿using FolderSync.Services;
 using FolderSync.Utils;
 
+
+if (args.Length < 3)
+{
+    Console.WriteLine("Usage: dotnet run -- <sourcePath> <replicaPath> <logFilePath>");
+    return;
+}
+
+string sourcePath = args[0];
+string replicaPath = args[1];
+string logFilePath = args[2];
+
 FolderSynchronizer folderSync = new FolderSynchronizer(
-    "C:\\Users\\kojad\\source\\repos\\test\\source",
-    "C:\\Users\\kojad\\source\\repos\\test\\replica",
-    new FileLogger("C:\\Users\\kojad\\source\\repos\\test\\log.txt")
+    sourcePath,
+    replicaPath,
+    new FileLogger(logFilePath)
 );
-await folderSync.start_sync();
+
+await folderSync.StartSync();

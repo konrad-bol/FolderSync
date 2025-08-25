@@ -38,7 +38,7 @@ namespace FolderSync.Tests
             File.WriteAllText(testFile, "periodic sync");
 
             // Act
-            var syncTask = folderSync.start_sync();
+            var syncTask = folderSync.StartSync();
             await Task.Delay(25000);
 
             // Assert
