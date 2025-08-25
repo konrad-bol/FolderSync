@@ -73,11 +73,28 @@ The program runs in a loop, periodically checking for changes (default: every 10
 
 ## 🧪 Tests
 
-The project includes unit tests for:
-- **FileComparer** – ensuring correct detection of added, removed, or changed lines
-- **FolderSynchronizer** – verifying synchronization logic (copying, moving, and deleting files)
-- **Logging** – checking if log messages are correctly generated and written
-- **Retry mechanism** – confirming that locked files are retried before failing
+The project includes a comprehensive test suite to ensure correctness and reliability of the synchronization process.
+
+### Covered components
+
+- **FileComparer** – ensures correct detection of added, removed, or changed lines in text files.
+- **FolderSynchronizer** – verifies synchronization logic such as copying, moving, and deleting files across directories.
+- **Logging** – checks whether log messages are correctly generated and written both to the console and to the log file.
+
+### TestHelper
+
+All tests inherit from an abstract class **`TestHelper`**, which provides common setup and utility methods for consistency and reusability:
+
+- `ArrangeTestEnvironment(out string sourcePath, out string replicaPath, out FolderSynchronizer folderSync, out string tempRoot)`  
+  Prepares an isolated temporary test environment, including source and replica folders with nested directories, and initializes the synchronizer.
+
+- `CleanupTestEnvironment(string tempRoot)`  
+  Cleans up the temporary environment after test execution to ensure no leftover files or directories remain.
+
+- `AreSourceAndReplicaEqual(string sourcePath, string replicaPath)`  
+  Utility method to verify that source and replica directories contain identical files with the same content.
+
+This structure ensures that every test runs in a controlled environment, preventing side effects and making the tests repeatable and reliable.
 
 **Example test (xUnit):**
 ```csharp
